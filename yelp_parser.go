@@ -53,7 +53,7 @@ func main() {
 		log.Fatal("Please, use: " + os.Args[0] + " <datafile> <action>")
 	}
 
-	fmt.Printf("ARGN: %d \n", len(os.Args))
+	//fmt.Printf("ARGN: %d \n", len(os.Args))
 	if len(os.Args) < 3 {
 		log.Fatal("Missing action command. Try: print")
 	}
@@ -78,14 +78,33 @@ func oldsentiment(data map[string]yelpReview) {
 		panic(fmt.Sprintf("Could not restore model!\n\t%v\n", err))
 	}
 
+	var positive_guess, positive_fail, negative_guess, negative_fail int
 	for k, m := range data {
 		an := model.SentimentAnalysis(m.Text, sentiment.English)
-
 		fmt.Printf("==========================\nK: %s (%2.2f): %d\n %s\n", k, m.Stars, an.Score, m.Text)
 		fmt.Printf("=====\nSentences: %v\n", an.Sentences)
 		fmt.Printf("=====\nWords: %v \n", an.Words)
-	}
 
+		if m.Stars > 3 {
+			if an.Score == 1 {
+				positive_guess++
+			} else {
+				positive_fail++
+			}
+		} else {
+			if an.Score == 0 {
+				negative_guess++
+			} else {
+				negative_fail++
+			}
+
+		} // Ignore 3 stars
+	}
+	var sum float64
+	sum = float64(positive_guess + positive_fail + negative_guess + negative_fail)
+	fmt.Printf("S:==============================================\nS:* 3 star reviews are ignorred\n"+
+		"S:true positive: %d\nS:true negative: %d\nS:false positive: %d (%f)\nS:false negative: %d (%f)\n",
+		positive_guess, negative_guess, positive_fail, float64(positive_fail)/sum, negative_fail, float64(negative_fail)/sum)
 }
 
 func readReviews(fn string) map[string]yelpReview {
