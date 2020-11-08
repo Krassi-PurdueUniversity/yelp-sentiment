@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cdipaolo/sentiment"
+	_ "github.com/cdipaolo/sentiment"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -32,19 +34,60 @@ type yelpReview struct {
 }
 
 func main() {
-	var data []byte
-
 	ifPrintln(2, "About to read file: "+g_reviews)
 
 	// Read input file name
 	if len(os.Args) > 1 {
-		g_reviews = os.Args[1]
+		if os.Args[1] == "." {
+			fmt.Println("Using default filename: " + g_reviews)
+		} else {
+			g_reviews = os.Args[1]
+		}
 		fmt.Println("Filename passed on command line: " + g_reviews)
 	} else {
-		fmt.Println("Using default filename: " + g_reviews)
+		log.Fatal("Please, use: " + os.Args[0] + " <datafile> <action>")
 	}
-	data = readDataFromFile(g_reviews)
 
+	fmt.Printf("ARGN: %d \n", len(os.Args))
+	if len(os.Args) < 3 {
+		log.Fatal("Missing action command. Try: print")
+	}
+
+	yelpData := readReviews(g_reviews)
+
+	switch os.Args[2] {
+	case "print":
+		for k, m := range yelpData {
+			fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
+		}
+		break
+	case "oldsentiment":
+		oldsentiment(yelpData)
+	}
+
+}
+
+func oldsentiment(data map[string]yelpReview) {
+	model, err := sentiment.Restore()
+	if err != nil {
+		panic(fmt.Sprintf("Could not restore model!\n\t%v\n", err))
+	}
+
+	for k, m := range data {
+		an := model.SentimentAnalysis(m.Text, sentiment.English)
+
+		fmt.Printf("==========================\nK: %s (%2.2f): %d\n %s\n", k, m.Stars, an.Score, m.Text)
+		fmt.Printf("=====\nSentences: %v\n", an.Sentences)
+		fmt.Printf("=====\nWords: %v \n", an.Words)
+	}
+
+}
+
+func readReviews(fn string) map[string]yelpReview {
+	//var data []byte
+	results := make(map[string]yelpReview)
+
+	data := readDataFromFile(fn)
 	dec := json.NewDecoder(bytes.NewReader(data))
 
 	for {
@@ -54,9 +97,10 @@ func main() {
 		} else if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("==========================\n%s: %s\n", m.Review_id, m.Text)
+		//fmt.Printf("==========================\n%s: %s\n", m.Review_id, m.Text)
+		results[m.Review_id] = m
 	}
-
+	return results
 }
 
 func readDataFromFile(fn string) []byte {
