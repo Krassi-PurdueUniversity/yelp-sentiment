@@ -1,3 +1,8 @@
+/*
+* CNIT 58100-NLT - course project
+* Includes from from https://github.com/cdipaolo/sentiment
+ */
+
 package main
 
 import (
