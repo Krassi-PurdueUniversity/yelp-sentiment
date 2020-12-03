@@ -25,6 +25,7 @@ import (
 var g_path = ""
 var g_reviews = g_path + "reviews_short.json"
 var g_outputDir = "output"
+var g_outputModel = "yelp_model.json"
 var g_outputPrefix = ""
 var g_verbosity uint = 4
 
@@ -41,29 +42,28 @@ type yelpReview struct {
 }
 
 func main() {
-	//	ifPrintln(2, "About to read file: "+g_reviews)
+	var command, arg string
 
-	// Read input file name
-	if len(os.Args) > 1 {
-		if os.Args[1] == "." {
-			fmt.Println("Using default filename: " + g_reviews)
-		} else {
-			g_reviews = os.Args[1]
+	if len(os.Args) > 2 {
+		command = os.Args[1]
+		arg = os.Args[2]
+
+		//fmt.Printf("DEBUG: %s :: %s \n", command, arg)
+		// Sets default name for the reviews file - this is not used in all cases
+		if arg == "." {
+			arg = g_reviews
 		}
-		fmt.Println("Filename passed on command line: " + g_reviews)
+
+		//fmt.Printf("DEBUG: %s :: %s \n", command, g_reviews)
 	} else {
-		log.Fatal("Please, use: " + os.Args[0] + " <datafile> <action>")
+		log.Fatalf("Usage %s <command> <argument>", os.Args[0])
 	}
 
-	//fmt.Printf("ARGN: %d \n", len(os.Args))
-	if len(os.Args) < 3 {
-		log.Fatal("Missing action command. Try: print")
-	}
-
-	yelpData := readReviews(g_reviews)
-
-	switch os.Args[2] {
+	switch command {
 	case "print":
+
+		yelpData := readReviews(arg)
+
 		for k, m := range yelpData {
 			fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
 		}
@@ -71,6 +71,8 @@ func main() {
 	case "split":
 		counter := 0
 		g_outputPrefix = os.Args[3]
+
+		yelpData := readReviews(arg)
 		for _, m := range yelpData {
 			//fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
 			fn := fmt.Sprintf("%s/%s-%6.6d_%d.txt", g_outputDir, g_outputPrefix, counter, int(m.Stars))
@@ -83,7 +85,24 @@ func main() {
 			counter++
 		}
 		break
+	case "train":
+		var err error
+		//var myModel sentiment.Models
+		model, err := sentiment.Train()
+		if err != nil {
+			panic(err.Error())
+		}
+
+		sentiment.PersistToFile(model, g_outputModel)
+
+		an := model.SentimentAnalysis("I feel good!", sentiment.English)
+		fmt.Printf("==========================\nScore: %d\n", an.Score)
+		fmt.Printf("=====\nSentences: %v\n", an.Sentences)
+		fmt.Printf("=====\nWords: %v \n", an.Words)
+
+		break
 	case "oldsentiment":
+		yelpData := readReviews(arg)
 		oldsentiment(yelpData)
 	default:
 		log.Fatalf("Unknown option \"%s\".", os.Args[2])
@@ -158,7 +177,7 @@ func readDataFromFile(fn string) []byte {
 
 	dataFile, err := ioutil.ReadFile(fn)
 	if err != nil {
-		log.Fatal("ERROR: opening data file (%s). ", err.Error())
+		log.Fatalf("ERROR: opening data file (%s): %s. ", fn, err.Error())
 	}
 
 	if strings.HasSuffix(fn, ".gz") { // Compressed file
