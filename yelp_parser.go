@@ -39,7 +39,7 @@ type yelpReview struct {
 }
 
 func main() {
-	ifPrintln(2, "About to read file: "+g_reviews)
+	//	ifPrintln(2, "About to read file: "+g_reviews)
 
 	// Read input file name
 	if len(os.Args) > 1 {
@@ -66,10 +66,33 @@ func main() {
 			fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
 		}
 		break
+	case "split":
+		outputDir := "/mnt/hgfs/CLASS_DATA/NLT/yelp/output"
+		counter := 0
+		for _, m := range yelpData {
+			//fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
+			fn := fmt.Sprintf("%s/%6.6d_%d.txt", outputDir, counter, int(m.Stars))
+			f, err := os.Create(fn)
+			check(err)
+			n, err := f.Write([]byte(m.Text))
+			check(err)
+			fmt.Printf("file: %s => bytes: %d \n", fn, n)
+			f.Close()
+			counter++
+		}
+		break
 	case "oldsentiment":
 		oldsentiment(yelpData)
+	default:
+		log.Fatalf("Unknown option \"%s\".", os.Args[2])
 	}
 
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
 
 func oldsentiment(data map[string]yelpReview) {
