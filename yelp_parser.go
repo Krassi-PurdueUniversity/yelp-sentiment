@@ -22,8 +22,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var g_path = "/mnt/hgfs/CLASS_DATA/NLT/yelp/"
+var g_path = "~/work/yelp"
 var g_reviews = g_path + "reviews_short.json"
+var g_outputDir = "~/work/yelp/output"
 var g_verbosity uint = 4
 
 type yelpReview struct {
@@ -67,11 +68,10 @@ func main() {
 		}
 		break
 	case "split":
-		outputDir := "/mnt/hgfs/CLASS_DATA/NLT/yelp/output"
 		counter := 0
 		for _, m := range yelpData {
 			//fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
-			fn := fmt.Sprintf("%s/%6.6d_%d.txt", outputDir, counter, int(m.Stars))
+			fn := fmt.Sprintf("%s/%6.6d_%d.txt", g_outputDir, counter, int(m.Stars))
 			f, err := os.Create(fn)
 			check(err)
 			n, err := f.Write([]byte(m.Text))
