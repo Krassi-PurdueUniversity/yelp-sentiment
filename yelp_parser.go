@@ -93,6 +93,8 @@ func main() {
 			panic(err.Error())
 		}
 
+		//g_outputModel
+
 		sentiment.PersistToFile(model, g_outputModel)
 
 		an := model.SentimentAnalysis("I feel good!", sentiment.English)
@@ -100,9 +102,14 @@ func main() {
 		fmt.Printf("=====\nSentences: %v\n", an.Sentences)
 		fmt.Printf("=====\nWords: %v \n", an.Words)
 
+		//sentiment.RestoreModels()
+
 		break
 	case "ratedir":
-		rateDir(arg)
+		model, err := sentiment.Restore()
+		check(err)
+
+		rateDir(arg, model)
 
 		break
 	case "oldsentiment":
@@ -114,14 +121,12 @@ func main() {
 
 }
 
-func rateDir(dir string) {
+func rateDir(dir string, model sentiment.Models) {
 	var pos, neg int32
 
 	fmt.Printf("Rating directory: %s\n", dir)
 	files, err := ioutil.ReadDir(dir)
 	check(err)
-
-	model, err := sentiment.Restore()
 
 	for _, f := range files {
 		if !strings.HasSuffix(f.Name(), ".txt") { // Ignore files not ending with .txt
