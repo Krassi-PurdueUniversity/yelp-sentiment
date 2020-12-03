@@ -73,7 +73,7 @@ func main() {
 		g_outputPrefix = os.Args[3]
 		for _, m := range yelpData {
 			//fmt.Printf("==========================\nK: %s => %s: %s\n", k, m.Review_id, m.Text)
-			fn := fmt.Sprintf("%s/%6.6d_%d.txt", g_outputDir, counter, int(m.Stars))
+			fn := fmt.Sprintf("%s/%s-%6.6d_%d.txt", g_outputDir, g_outputPrefix, counter, int(m.Stars))
 			f, err := os.Create(fn)
 			check(err)
 			n, err := f.Write([]byte(m.Text))
