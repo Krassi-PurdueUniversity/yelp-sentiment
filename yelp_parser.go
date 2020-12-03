@@ -101,13 +101,47 @@ func main() {
 		fmt.Printf("=====\nWords: %v \n", an.Words)
 
 		break
+	case "ratedir":
+		rateDir(arg)
+
+		break
 	case "oldsentiment":
 		yelpData := readReviews(arg)
 		oldsentiment(yelpData)
 	default:
-		log.Fatalf("Unknown option \"%s\".", os.Args[2])
+		log.Fatalf("Unknown option \"%s\".", command)
 	}
 
+}
+
+func rateDir(dir string) {
+	var pos, neg int32
+
+	fmt.Printf("Rating directory: %s\n", dir)
+	files, err := ioutil.ReadDir(dir)
+	check(err)
+
+	model, err := sentiment.Restore()
+
+	for _, f := range files {
+		if !strings.HasSuffix(f.Name(), ".txt") { // Ignore files not ending with .txt
+			continue
+		}
+
+		fmt.Printf("Processing: %s => ", f.Name())
+		content, err := ioutil.ReadFile(dir + f.Name())
+		check(err)
+		//text := string(content)
+		an := model.SentimentAnalysis(string(content), sentiment.English)
+		fmt.Printf("%d\n", an.Score)
+		//fmt.Printf("%s :: %s \n", an.Sentences, an.Words)
+		if an.Score == 1 {
+			pos++
+		} else {
+			neg++
+		}
+	}
+	fmt.Printf("Analyzed total of %d files. Pos: %d; Neg: %d .\n", pos+neg, pos, neg)
 }
 
 func check(e error) {
