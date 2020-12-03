@@ -128,12 +128,13 @@ func rateDir(dir string) {
 			continue
 		}
 
-		fmt.Printf("Processing: %s => ", f.Name())
-		content, err := ioutil.ReadFile(dir + f.Name())
+		//fmt.Printf("Processing: %s => ", f.Name())
+		content, err := ioutil.ReadFile(dir + "/" + f.Name())
 		check(err)
 		//text := string(content)
 		an := model.SentimentAnalysis(string(content), sentiment.English)
-		fmt.Printf("%d\n", an.Score)
+		//fmt.Printf("%d\n", an.Score)
+		//fmt.Printf("%d  ", an.Score)
 		//fmt.Printf("%s :: %s \n", an.Sentences, an.Words)
 		if an.Score == 1 {
 			pos++
